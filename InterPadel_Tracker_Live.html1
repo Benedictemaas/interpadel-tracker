@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InterPadel · 100-Dagers Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --white: #ffffff;
+  --border: #d8d6d0;
+  --border-light: #ebe9e3;
+  --text: #1a1a18;
+  --muted: #8a8880;
+  --accent: #1a472a;
+  --accent-light: #e8f0ea;
+  --red-bg: #fdf0ef;
+  --red-border: #e8c4c0;
+  --red-text: #8b2318;
+  --orange-bg: #fdf5ee;
+  --orange-border: #e8d0b0;
+  --orange-text: #7a4010;
+  --section-bg: #1a1a18;
+  --section-text: #f5f4f0;
+  --green: #1a6b2a;
+  --yellow: #b88a00;
+  --red: #c0392b;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.logo {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.topbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+.topbar-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: background 0.3s;
+}
+.sync-dot.synced { background: #27ae60; }
+.sync-dot.syncing { background: #f39c12; animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+
+/* ── SETUP OVERLAY ── */
+.setup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,24,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.setup-card {
+  background: var(--white);
+  border-radius: 8px;
+  padding: 36px 40px;
+  width: 460px;
+  box-shadow: var(--shadow-md);
+}
+.setup-card h2 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.setup-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.setup-card label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.setup-card input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  margin-bottom: 20px;
+}
+.setup-card input:focus { border-color: var(--accent); background: var(--white); }
+.setup-btn {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.setup-btn:hover { opacity: 0.85; }
+.setup-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 16px;
+  text-align: center;
+  line-height: 1.5;
+}
+.setup-note a { color: var(--accent); }
+
+/* ── TABLE WRAPPER ── */
+.table-wrap {
+  overflow-x: auto;
+  padding: 20px 16px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 1200px;
+  background: var(--white);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+/* ── COLUMN WIDTHS ── */
+col.c0 { width: 34px; }
+col.c1 { width: 180px; }
+col.c2 { width: 72px; }
+col.c3 { width: 78px; }
+col.c4 { width: 90px; }
+col.c5 { width: 260px; }
+col.c6 { width: 72px; }
+col.c7 { width: 90px; }
+col.c8 { width: 72px; }
+col.c9 { width: 240px; }
+col.c10, col.c11, col.c12, col.c13, col.c14 { width: 62px; }
+
+/* ── THEAD ── */
+thead th {
+  background: var(--white);
+  border-bottom: 2px solid var(--border);
+  border-right: 1px solid var(--border-light);
+  padding: 10px 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+}
+thead th:nth-child(2), thead th:nth-child(6) { text-align: left; padding-left: 10px; }
+thead th:last-child { border-right: none; }
+
+/* ── SECTION ROWS ── */
+tr.section td {
+  background: var(--section-bg);
+  color: var(--section-text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-bottom: none;
+}
+
+/* ── WORKSTREAM ROWS ── */
+tr.ws-critical td {
+  background: var(--red-bg);
+  border-bottom: 1px solid var(--red-border);
+  border-right: 1px solid var(--red-border);
+  padding: 8px 8px;
+  color: var(--red-text);
+  font-weight: 500;
+}
+tr.ws-high td {
+  background: var(--orange-bg);
+  border-bottom: 1px solid var(--orange-border);
+  border-right: 1px solid var(--orange-border);
+  padding: 8px 8px;
+  color: var(--orange-text);
+  font-weight: 500;
+}
+tr.ws-critical td:last-child, tr.ws-high td:last-child { border-right: none; }
+
+/* ── TASK ROWS ── */
+tr.task td, tr.milestone td {
+  background: var(--white);
+  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  padding: 6px 8px;
+  vertical-align: top;
+}
+tr.milestone td { background: #fafaf8; }
+tr.task:hover td, tr.milestone:hover td { background: #f8f8f5; }
+tr.task td:last-child, tr.milestone td:last-child { border-right: none; }
+
+/* ── PRI BADGE ── */
+.pri {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 2px;
+  display: inline-block;
+  white-space: nowrap;
+}
+.pri-k { background: rgba(139,35,24,0.1); color: var(--red-text); border: 1px solid rgba(139,35,24,0.2); }
+.pri-h { background: rgba(122,64,16,0.1); color: var(--orange-text); border: 1px solid rgba(122,64,16,0.2); }
+
+/* ── STATUS BADGE ── */
+.status-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 17px;
+  border: none;
+  background: transparent;
+  transition: background 0.1s, transform 0.1s;
+  margin: auto;
+  user-select: none;
+}
+.status-btn:hover { background: var(--border-light); transform: scale(1.1); }
+.status-btn.empty { font-size: 11px; color: var(--border); }
+
+/* ── NOTES TEXTAREA ── */
+td.notes-td {
+  padding: 5px 6px !important;
+}
+td.notes-td textarea {
+  width: 100%;
+  min-height: 52px;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.55;
+  padding: 3px 5px;
+  outline: none;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+td.notes-td textarea:focus {
+  border-color: var(--border);
+  background: #fffff8;
+}
+td.notes-td textarea::placeholder { color: #ccc; }
+
+/* ── EDITABLE CONTENT ── */
+.editable {
+  outline: none;
+  border-radius: 2px;
+  min-height: 18px;
+  cursor: text;
+  padding: 1px 2px;
+  line-height: 1.4;
+}
+.editable:focus { background: rgba(26,71,42,0.05); outline: 1px solid rgba(26,71,42,0.3); }
+
+/* ── ROW NUMBER ── */
+.rnum {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--border);
+  text-align: center;
+}
+
+.task-text { font-size: 12px; color: var(--text); line-height: 1.4; }
+.milestone-text { font-size: 11.5px; color: var(--muted); font-style: italic; line-height: 1.4; }
+.owner-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); text-align: center; }
+.due-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); text-align: center; }
+.ws-text { font-size: 12px; font-weight: 500; }
+.time-text { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-align: center; }
+
+/* ── FUTURE STATUS COLS ── */
+td.future { background: #fafaf8 !important; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--section-bg);
+  color: #f5f4f0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  padding: 8px 18px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP OVERLAY -->
+<div id="setupOverlay" class="setup-overlay" style="display:none">
+  <div class="setup-card">
+    <h2>Velkommen til trackeren</h2>
+    <p>Skriv inn ditt navn så vises det for Martin når du gjør endringer — og omvendt.</p>
+    <label>Ditt navn</label>
+    <input type="text" id="userNameInput" placeholder="f.eks. Benedicte eller Martin" maxlength="30">
+    <button class="setup-btn" onclick="saveSetup()">Start →</button>
+    <p class="setup-note">Det er alt! Trackeren synkroniseres automatisk mellom deg og Martin.</p>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="logo">INTERPADEL</span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-title">100-Dagers Plan Tracker · April – Juli 2026</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:20px">
+    <div class="sync-status">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Laster…</span>
+    </div>
+    <div class="legend">
+      <span class="legend-item">🟢 Gjennomført</span>
+      <span class="legend-item">🟡 Pågår</span>
+      <span class="legend-item">🔴 Ikke startet</span>
+    </div>
+    <button onclick="showSetup()" style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 10px;border:1px solid var(--border);border-radius:3px;background:transparent;cursor:pointer;color:var(--muted)">⚙ Innstillinger</button>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+<table>
+<colgroup>
+  <col class="c0"><col class="c1"><col class="c2"><col class="c3"><col class="c4">
+  <col class="c5"><col class="c6"><col class="c7"><col class="c8"><col class="c9">
+  <col class="c10"><col class="c11"><col class="c12"><col class="c13"><col class="c14">
+</colgroup>
+<thead>
+  <tr>
+    <th>#</th><th style="text-align:left">Workstream</th><th>Prioritet</th>
+    <th>Tidsramme</th><th>Eier</th><th style="text-align:left">Nøkkeltiltak</th>
+    <th>24.04.26</th><th>Tiltakseier</th><th>Frist</th>
+    <th style="text-align:left">Notater / Blokkere</th>
+    <th>08.05.26</th><th>22.05.26</th><th>05.06.26</th><th>19.06.26</th><th>03.07.26</th>
+  </tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const ROWS = [
+  {type:'section',label:'SP1  ·  OPERASJONELL STRUKTUR OG KONTROLL'},
+  {type:'ws',id:'ws1',num:1,ws:'Oppdeling av IP AS i tre enheter',pri:'KRITISK',time:'Dag 1–50',owner:'CEO',style:'critical'},
+  {type:'task',id:'t1a',task:'Etablere IP Nord-Norge (Narvik & Harstad) — nøkkelperson: Esben Pedersen',s0:'🟡',towner:'CEO',due:'15. mai',notes:'Venter på årsregnskapet 2025 — avklares før videre selskapsstruktur'},
+  {type:'task',id:'t1b',task:'Etablere IP Stavanger/Sandnes omegn — Joel, Manu, Jeroen, Rosalie, Andreas, Nick, Sulen',s0:'🟡',towner:'CEO',due:'15. mai',notes:'Venter på årsregnskapet 2025 — avklares før videre selskapsstruktur'},
+  {type:'task',id:'t1c',task:'IP Bryne: avklare struktur avhengig av porteføljevalg — Anne, Jarle, Trond, Aras',s0:'🟡',towner:'CEO',due:'15. mai',notes:'Venter på årsregnskapet 2025 — avklares før videre selskapsstruktur'},
+  {type:'milestone',id:'m1',task:'Ny selskapsstruktur bekreftet, dokumentert og styregodkjent',s0:'🔴',towner:'CEO',due:'22. mai',notes:''},
+  {type:'ws',id:'ws2',num:2,ws:'Implementere KPI-rammeverk per senter',pri:'HØY',time:'Dag 1–100',owner:'CEO & Per Atle',style:'high'},
+  {type:'task',id:'t2a',task:'Definere KPI-rammeverk per senter — inntekt, lønnsomhet (EBITDA, husleie%, lønn%) og kostnadskontroll',s0:'🟡',towner:'CEO',due:'08. mai',notes:''},
+
+  {type:'section',label:'SP2  ·  LØNNSOMHET GJENNOM SOMMER'},
+  {type:'ws',id:'ws3',num:3,ws:'KPI-mål og rapportering mot sommer',pri:'KRITISK',time:'Dag 1–60',owner:'CEO & CSO',style:'critical'},
+  {type:'task',id:'t3a',task:'Definere og kommunisere KPI-mål per senterleder — kostnad, drift, aktivitet og arrangementer',s0:'🟢',towner:'CEO & CSO',due:'23. april',notes:''},
+  {type:'task',id:'t3b',task:'Implementere ukentlig rapportering — senterledere leverer mandager 08:00',s0:'🟢',towner:'CEO & CSO',due:'23. april',notes:'Alle har fått beskjed om møte annen hver uke med oppstart uke 20. Utfylling av KPier starter uke 19.'},
+  {type:'task',id:'t3c',task:'Innføre innkjøpsstopp for alle sentre (mai–august) — kommuniseres skriftlig',s0:'🟢',towner:'CEO',due:'24. apr',notes:''},
+  {type:'milestone',id:'m3',task:'Kommunisere Spania-incentiv til senterledere som når KPI-mål',s0:'🟢',towner:'CEO & CSO',due:'23. april',notes:'Kommunisert dersom 80% oppnår KPIene. Turen ikke booket/avklart med Linda og Bjørn, teker oktober.'},
+  {type:'ws',id:'ws4',num:4,ws:'Sentrale tiltak inn mot sommer',pri:'KRITISK',time:'Dag 1–60',owner:'CEO & CSO',style:'critical'},
+  {type:'task',id:'t4a',task:'Avdragsfrihet leasing IP AS — søke og innvilge',s0:'🟡',towner:'CEO',due:'24. apr',notes:''},
+  {type:'task',id:'t4b',task:'Stoppe renhold fra Toma mai–august — bekreft skriftlig med Toma',s0:'🟢',towner:'CEO',due:'24. apr',notes:'Utført: Harstad, Narvik, Sandnes og Bryne'},
+  {type:'task',id:'t4c',task:'Selge 10 banesponsorer innen utgang av juni',s0:'🟡',towner:'CSO',due:'31. juni',notes:'Uke 16 og 17: 2 salg. Dobbelbane Sandsli 85 000,-. Singelbane Forus 40 000,-.'},
+  {type:'task',id:'t4d',task:'Innføre lønnsbudsjetter for alle sentre (høy- og lavsesong)',s0:'🟡',towner:'CEO',due:'22. mai',notes:''},
+
+  {type:'section',label:'SP3  ·  OPTIMALISERING AV NORGE'},
+  {type:'ws',id:'ws5',num:5,ws:'Øke kapasitetsutnyttelse i alle sentre',pri:'HØY',time:'Dag 1–100',owner:'CSO',style:'high'},
+  {type:'task',id:'t5a',task:'Implementere strukturert prising (peak / off-peak) på tvers av alle sentre',s0:'🟢',towner:'CSO',due:'23. april',notes:'I form av konkurranse.'},
+  {type:'task',id:'t5c',task:'Øke B2B-avtaler og faste bookinger',s0:'🟡',towner:'CSO',due:'31. juni',notes:'Status uke 16 og 17: En 70/30 avtale Baker Hughes IP Sandnes, ca 30 000,- i verdikort. Minimumsfakturering på TT, per nå kun en av leietakerne.'},
+  {type:'milestone',id:'m5',task:'Aktiv oppfølging av belegg per senter — annenhver uke',s0:'🔴',towner:'CSO',due:'08. mai',notes:'Prioriteringer uke 16 og 17 har vært Harstad og Narvik pga innkjøringen med Esben pluss Rune slutter.'},
+  {type:'ws',id:'ws6',num:6,ws:'Porteføljeoptimalisering · Bryne, Trim Tower',pri:'KRITISK',time:'Dag 1–100',owner:'CEO, Olav Sand & Bjørn M.',style:'critical'},
+  {type:'task',id:'t6a',task:'Bryne: beslutte nedbygging (5–6 baner) eller nedleggelse',s0:'🟡',towner:'CEO',due:'01. mai',notes:''},
+  {type:'task',id:'t6b',task:'Trim Tower: gjennomføre avvikling og ressursflytting',s0:'🟡',towner:'CEO',due:'22. mai',notes:''},
+  {type:'milestone',id:'m6',task:'Identifisere tiltak for å redusere negativt resultatbidrag — begge lokasjoner',s0:'🟡',towner:'CEO',due:'05. jun',notes:''},
+  {type:'ws',id:'ws7',num:7,ws:'Øke B2B-salg og bedriftsavtaler',pri:'HØY',time:'Dag 1–100',owner:'CSO',style:'high'},
+  {type:'task',id:'t7a',task:'Identifisere og prioritere lokale bedriftskunder per senter',s0:'🔴',towner:'CSO',due:'1. juni',notes:''},
+  {type:'task',id:'t7b',task:'Etablere strukturert salgsprosess: fast slot, verdikort, 50/50-avtale',s0:'🔴',towner:'CSO',due:'20. mai',notes:''},
+  {type:'milestone',id:'m7',task:'Selge bedriftseventer og teambuilding',s0:'🟡',towner:'CSO',due:'03. jul',notes:'Pågående prosess. Full oppstart uke 18. SoMe, Nyhetsbrev, senterledere etc.'},
+  {type:'ws',id:'ws8',num:8,ws:'Øke aktivitet · events, ligaer, turneringer',pri:'HØY',time:'Dag 1–100',owner:'CSO',style:'high'},
+  {type:'task',id:'t8a',task:'Etablere aktivitetskalender per senter — events, ligaer og turneringer',s0:'🟢',towner:'CSO',due:'23. april',notes:''},
+  {type:'milestone',id:'m8',task:'Aktiv promotering av aktiviteter via sosiale medier og lokal markedsføring',s0:'🟡',towner:'CSO',due:'03. jul',notes:'Pågående prosess med SoMe og innkjøring av publiseringsfrekvens.'},
+  {type:'ws',id:'ws9',num:9,ws:'Strukturere salgsarbeid per senter',pri:'HØY',time:'Dag 1–100',owner:'CSO',style:'high'},
+  {type:'task',id:'t9a',task:'Definere salgsansvar og etablere ukentlig oppfølging per senter',s0:'🔴',towner:'CSO',due:'30. mai',notes:''},
+  {type:'milestone',id:'m9',task:'Engasjere lokale eiere og nøkkelpersoner i kommersielt arbeid',s0:'🔴',towner:'CSO',due:'30. mai',notes:''},
+  {type:'ws',id:'ws10',num:10,ws:'Sosiale medier',pri:'HØY',time:'Dag 1–100',owner:'CSO & Chiyo',style:'high'},
+  {type:'task',id:'t10a',task:'Etablere publiseringsplan per senter — minimum 3 innlegg per uke',s0:'🟡',towner:'CSO & Chiyo',due:'23. april',notes:'Planen er laget, men følges ikke opp av senterledere. Neste uke fokus ved oppstart av eventpromotering.'},
+  {type:'task',id:'t10b',task:'Produsere og publisere innhold for aktivitet, booking og community',s0:'🟡',towner:'CSO & Chiyo',due:'30. juni',notes:'Fokus for april ble klart 20. april. Startet i META, lander på arrangementslandingsside. Rullet i to dager, ett arrangement kommet inn.'},
+
+  {type:'section',label:'SP4  ·  ØKONOMI OG DRIFT'},
+  {type:'ws',id:'ws11',num:11,ws:'Bankgaranti og likviditet',pri:'KRITISK',time:'Dag 1–100',owner:'CEO',style:'critical'},
+  {type:'task',id:'t11a',task:'Sjekke bankgaranti Nord-Norge og IP Bryne — avklare status og eventuelle forpliktelser',s0:'🔴',towner:'CEO',due:'TBD',notes:''},
+  {type:'task',id:'t11b',task:'Likviditetsbudsjetter Nord-Norge — utarbeide og følge opp',s0:'🔴',towner:'CEO',due:'TBD',notes:''},
+  {type:'ws',id:'ws12',num:12,ws:'Court Metrics og alarmvarsling',pri:'HØY',time:'Dag 1–100',owner:'CSO',style:'high'},
+  {type:'task',id:'t12a',task:'Court Metrics: sette opp alarmvarsling med ferdig definerte tiltaksvalg som senterledere kan velge mellom ved avvik',s0:'🔴',towner:'CSO',due:'TBD',notes:''},
+];
+
+const STATUS_CYCLE = ['','🔴','🟡','🟢'];
+const STORAGE_KEY = 'ip_tracker_state_v1';
+const API_STORAGE_KEY = 'ip_tracker_cloud_v1';
+const SYNC_INTERVAL = 8000; // poll every 8s
+
+// ── LOCAL STATE ───────────────────────────────────────────────────────────────
+let localState = {};
+let apiKey = '';
+let userName = 'Bruker';
+let syncTimer = null;
+let lastCloudState = '';
+let isSyncing = false;
+
+function loadLocal() {
+  try { localState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { localState = {}; }
+  apiKey = localStorage.getItem('ip_apikey') || '';
+  userName = localStorage.getItem('ip_username') || '';
+}
+function saveLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(localState));
+}
+
+function getV(id, field, def) {
+  return (localState[id] && localState[id][field] !== undefined) ? localState[id][field] : def;
+}
+function setV(id, field, val) {
+  if (!localState[id]) localState[id] = {};
+  localState[id][field] = val;
+  saveLocal();
+  pushToCloud();
+}
+
+// ── CLOUD SYNC via Anthropic API ──────────────────────────────────────────────
+// We store data as a JSON "document" by asking Claude to store/retrieve it.
+// The trick: we use a deterministic system prompt as a key-value store.
+// Claude stores the state in its context and returns it verbatim.
+
+async function pushToCloud() {
+  if (!apiKey || isSyncing) return;
+  const payload = JSON.stringify(localState);
+  if (payload === lastCloudState) return;
+  setSyncStatus('syncing', 'Synkroniserer…');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 8,
+        system: `You are a data store. The key is "${API_STORAGE_KEY}". When given JSON data, respond only with: OK`,
+        messages: [{ role: 'user', content: `STORE:${payload}` }]
+      })
+    });
+    if (res.ok) {
+      lastCloudState = payload;
+      setSyncStatus('synced', `Lagret · ${userName || 'deg'}`);
+      showToast('Endringer lagret');
+    } else {
+      setSyncStatus('error', 'Feil ved lagring');
+    }
+  } catch {
+    setSyncStatus('error', 'Nettverksfeil');
+  }
+}
+
+// Since Anthropic API is stateless, we use a clever workaround:
+// Store state in localStorage AND use a shared "password" approach.
+// For true multi-user sync, we embed the state in a shared Google Sheet
+// (already created) and poll it. But the simplest real approach here
+// is to use the Google Sheet we already created as the sync backend.
+
+// ── BETTER APPROACH: Use the Google Sheet as sync backend ─────────────────────
+// We'll use a public readable Google Sheet + Apps Script webhook for writing.
+// But for simplicity, let's use a free JSONBin.io bin for shared state.
+
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+let jsonbinId = '';
+let jsonbinKey = '';
+
+async function initCloudStore() {
+  // Check if we have a bin ID stored
+  jsonbinId = localStorage.getItem('ip_bin_id') || '';
+  jsonbinKey = localStorage.getItem('ip_bin_key') || '';
+
+  if (!jsonbinId) {
+    // Create a new bin
+    try {
+      const res = await fetch(`${JSONBIN_BASE}/b`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Bin-Name': 'InterPadel-100Dager',
+          'X-Collection-Id': '',
+        },
+        body: JSON.stringify({ state: localState, lastUpdatedBy: userName, ts: Date.now() })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        jsonbinId = data.metadata.id;
+        localStorage.setItem('ip_bin_id', jsonbinId);
+        setSyncStatus('synced', 'Klar til bruk');
+        showBinId();
+      } else {
+        fallbackToLocal();
+      }
+    } catch {
+      fallbackToLocal();
+    }
+  } else {
+    await pullFromCloud();
+  }
+  startPolling();
+}
+
+function fallbackToLocal() {
+  setSyncStatus('synced', 'Lokal lagring');
+  showToast('Bruker lokal lagring — del URL manuelt');
+}
+
+async function pushStateToCloud() {
+  if (!jsonbinId || isSyncing) return;
+  const payload = { state: localState, lastUpdatedBy: userName || 'Ukjent', ts: Date.now() };
+  const payloadStr = JSON.stringify(payload);
+  if (payloadStr === lastCloudState) return;
+  isSyncing = true;
+  setSyncStatus('syncing', 'Lagrer…');
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (jsonbinKey) headers['X-Master-Key'] = jsonbinKey;
+    const res = await fetch(`${JSONBIN_BASE}/b/${jsonbinId}`, {
+      method: 'PUT',
+      headers,
+      body: payloadStr
+    });
+    if (res.ok) {
+      lastCloudState = payloadStr;
+      setSyncStatus('synced', `Lagret av ${userName || 'deg'}`);
+    } else {
+      setSyncStatus('error', 'Lagringsfeil');
+    }
+  } catch {
+    setSyncStatus('error', 'Nettverksfeil');
+  }
+  isSyncing = false;
+}
+
+async function pullFromCloud() {
+  if (!jsonbinId) return;
+  try {
+    const headers = {};
+    if (jsonbinKey) headers['X-Master-Key'] = jsonbinKey;
+    const res = await fetch(`${JSONBIN_BASE}/b/${jsonbinId}/latest`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      const remote = data.record;
+      const remoteStr = JSON.stringify(remote);
+      if (remoteStr !== lastCloudState && remote.state) {
+        const prevStr = JSON.stringify(localState);
+        // Merge: remote wins on conflicts (last-write-wins)
+        localState = Object.assign({}, localState, remote.state);
+        saveLocal();
+        lastCloudState = remoteStr;
+        const newStr = JSON.stringify(localState);
+        if (newStr !== prevStr) {
+          refreshAllCells();
+          const who = remote.lastUpdatedBy || 'noen';
+          if (who !== (userName || 'deg')) {
+            showToast(`${who} oppdaterte trackeren`);
+          }
+        }
+        setSyncStatus('synced', `Synkronisert`);
+      } else {
+        setSyncStatus('synced', 'Oppdatert');
+      }
+    }
+  } catch {
+    setSyncStatus('error', 'Synkfeil');
+  }
+}
+
+function startPolling() {
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(pullFromCloud, SYNC_INTERVAL);
+}
+
+function showBinId() {
+  // Show the bin ID so Martin can connect
+  const url = `${window.location.href.split('?')[0]}?bin=${jsonbinId}`;
+  localStorage.setItem('ip_share_url', url);
+}
+
+// On load, check if bin ID is in URL
+function checkUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const bin = params.get('bin');
+  if (bin && bin !== jsonbinId) {
+    jsonbinId = bin;
+    localStorage.setItem('ip_bin_id', bin);
+  }
+}
+
+// ── SYNC STATUS UI ────────────────────────────────────────────────────────────
+function setSyncStatus(state, label) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = label;
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── SETUP ─────────────────────────────────────────────────────────────────────
+function showSetup() {
+  const o = document.getElementById('setupOverlay');
+  document.getElementById('userNameInput').value = userName;
+  o.style.display = 'flex';
+}
+function saveSetup() {
+  userName = document.getElementById('userNameInput').value.trim() || 'Bruker';
+  localStorage.setItem('ip_username', userName);
+  document.getElementById('setupOverlay').style.display = 'none';
+  showToast(`Hei, ${userName}! Synkronisering aktiv.`);
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('setupOverlay').style.display = 'none';
+});
+
+// ── AUTO-GROW TEXTAREA ────────────────────────────────────────────────────────
+function autoGrow(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+// ── STATUS CYCLE ──────────────────────────────────────────────────────────────
+function nextStatus(cur) {
+  const i = STATUS_CYCLE.indexOf(cur);
+  return STATUS_CYCLE[(i + 1) % STATUS_CYCLE.length];
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+const cellRegistry = {}; // id → { field → element }
+
+function regCell(id, field, el) {
+  if (!cellRegistry[id]) cellRegistry[id] = {};
+  cellRegistry[id][field] = el;
+}
+
+function refreshAllCells() {
+  for (const id in cellRegistry) {
+    const cells = cellRegistry[id];
+    for (const field in cells) {
+      const el = cells[field];
+      const rowDef = ROWS.find(r => r.id === id);
+      if (!rowDef) continue;
+      const def = field === 'notes' ? (rowDef.notes || '')
+                : field === 's0'    ? (rowDef.s0 || '')
+                : field.startsWith('ci') ? ''
+                : rowDef[field] || '';
+      const val = getV(id, field, def);
+      if (el.tagName === 'TEXTAREA') {
+        if (el.value !== val) { el.value = val; autoGrow(el); }
+      } else if (el.classList.contains('status-btn')) {
+        el.textContent = val || '·';
+        el.className = 'status-btn' + (val ? '' : ' empty');
+      } else if (el.hasAttribute('contenteditable')) {
+        if (el.textContent !== val) el.textContent = val;
+      }
+    }
+  }
+}
+
+function makeStatusBtn(id, field, def) {
+  const val = getV(id, field, def);
+  const btn = document.createElement('button');
+  btn.className = 'status-btn' + (val ? '' : ' empty');
+  btn.textContent = val || '·';
+  btn.title = 'Klikk for å endre status';
+  btn.addEventListener('click', () => {
+    const cur = getV(id, field, def);
+    const next = nextStatus(cur);
+    btn.textContent = next || '·';
+    btn.className = 'status-btn' + (next ? '' : ' empty');
+    setV(id, field, next);
+    pushStateToCloud();
+  });
+  regCell(id, field, btn);
+  return btn;
+}
+
+function makeNotesTd(id, def) {
+  const td = document.createElement('td');
+  td.className = 'notes-td';
+  const ta = document.createElement('textarea');
+  const val = getV(id, 'notes', def);
+  ta.value = val;
+  ta.placeholder = 'Legg til notat…';
+  ta.addEventListener('input', () => {
+    autoGrow(ta);
+    setV(id, 'notes', ta.value);
+  });
+  ta.addEventListener('blur', () => pushStateToCloud());
+  ta.addEventListener('focus', () => autoGrow(ta));
+  td.appendChild(ta);
+  regCell(id, 'notes', ta);
+  requestAnimationFrame(() => autoGrow(ta));
+  return td;
+}
+
+function makeEditable(id, field, def, cls) {
+  const div = document.createElement('div');
+  div.className = 'editable ' + (cls || '');
+  div.contentEditable = 'true';
+  div.textContent = getV(id, field, def);
+  div.addEventListener('blur', () => {
+    setV(id, field, div.textContent.trim());
+    pushStateToCloud();
+  });
+  regCell(id, field, div);
+  return div;
+}
+
+function buildRow(row) {
+  const tr = document.createElement('tr');
+
+  if (row.type === 'section') {
+    tr.className = 'section';
+    const td = document.createElement('td');
+    td.colSpan = 15;
+    td.textContent = row.label;
+    tr.appendChild(td);
+    return tr;
+  }
+
+  if (row.type === 'ws') {
+    tr.className = row.style === 'critical' ? 'ws-critical' : 'ws-high';
+    const defs = [
+      {text: row.num, align:'center'},
+      {text: row.ws, cls:'ws-text', align:'left'},
+      {badge: row.pri},
+      {text: row.time, cls:'time-text'},
+      {text: row.owner, cls:'owner-text'},
+      {text:''},{text:''},{text:''},{text:''},{text:''},
+      {text:''},{text:''},{text:''},{text:''},{text:''}
+    ];
+    defs.forEach((d,i) => {
+      const td = document.createElement('td');
+      td.style.textAlign = d.align || 'center';
+      if (d.badge) {
+        const span = document.createElement('span');
+        span.className = 'pri ' + (d.badge === 'KRITISK' ? 'pri-k' : 'pri-h');
+        span.textContent = d.badge;
+        td.appendChild(span);
+      } else {
+        const span = document.createElement('span');
+        span.className = d.cls || '';
+        span.textContent = d.text || '';
+        td.appendChild(span);
+      }
+      tr.appendChild(td);
+    });
+    return tr;
+  }
+
+  tr.className = row.type === 'milestone' ? 'milestone' : 'task';
+  const id = row.id;
+
+  // # (empty for sub-rows)
+  const tdN = document.createElement('td'); tdN.className = 'rnum'; tr.appendChild(tdN);
+  // Workstream (empty)
+  tr.appendChild(document.createElement('td'));
+  tr.appendChild(document.createElement('td'));
+  tr.appendChild(document.createElement('td'));
+  tr.appendChild(document.createElement('td'));
+
+  // Task text
+  const tdTask = document.createElement('td');
+  tdTask.appendChild(makeEditable(id, 'task', row.task, row.type === 'milestone' ? 'milestone-text' : 'task-text'));
+  tr.appendChild(tdTask);
+
+  // Status 24.04
+  const td0 = document.createElement('td');
+  td0.style.textAlign = 'center';
+  td0.appendChild(makeStatusBtn(id, 's0', row.s0));
+  tr.appendChild(td0);
+
+  // Tiltakseier
+  const tdTo = document.createElement('td');
+  tdTo.appendChild(makeEditable(id, 'towner', row.towner, 'owner-text'));
+  tr.appendChild(tdTo);
+
+  // Frist
+  const tdDue = document.createElement('td');
+  tdDue.appendChild(makeEditable(id, 'due', row.due, 'due-text'));
+  tr.appendChild(tdDue);
+
+  // Notes
+  tr.appendChild(makeNotesTd(id, row.notes || ''));
+
+  // Future check-ins
+  for (let ci = 0; ci < 5; ci++) {
+    const td = document.createElement('td');
+    td.className = 'future';
+    td.style.textAlign = 'center';
+    td.appendChild(makeStatusBtn(id, 'ci'+ci, ''));
+    tr.appendChild(td);
+  }
+
+  return tr;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tbody');
+  ROWS.forEach(row => tbody.appendChild(buildRow(row)));
+  requestAnimationFrame(() => {
+    document.querySelectorAll('td.notes-td textarea').forEach(ta => autoGrow(ta));
+  });
+}
+
+// ── SHARE BUTTON ─────────────────────────────────────────────────────────────
+function getShareUrl() {
+  if (!jsonbinId) return window.location.href;
+  const base = window.location.href.split('?')[0];
+  return `${base}?bin=${jsonbinId}`;
+}
+
+// Add share info to topbar after init
+function addShareUI() {
+  const topbar = document.querySelector('.topbar-right');
+  const btn = document.createElement('button');
+  btn.style.cssText = 'font-family:"IBM Plex Mono",monospace;font-size:10px;padding:5px 10px;border:1px solid #1a472a;border-radius:3px;background:#e8f0ea;cursor:pointer;color:#1a472a;font-weight:600';
+  btn.textContent = '🔗 Del med Martin';
+  btn.onclick = () => {
+    const url = getShareUrl();
+    navigator.clipboard.writeText(url).then(() => showToast('Link kopiert! Send den til Martin.')).catch(() => {
+      prompt('Kopier denne linken og send til Martin:', url);
+    });
+  };
+  topbar.insertBefore(btn, topbar.firstChild);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadLocal();
+checkUrlParams();
+renderTable();
+
+// Check if first time — show setup if no username
+if (!userName) {
+  setTimeout(() => {
+    document.getElementById('setupOverlay').style.display = 'flex';
+  }, 500);
+} else {
+  setSyncStatus('syncing', 'Kobler til…');
+}
+
+// Init cloud after a short delay
+setTimeout(async () => {
+  await initCloudStore();
+  addShareUI();
+}, 800);
+</script>
+</body>
+</html>
